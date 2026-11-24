@@ -26,4 +26,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: dirtyJtag-uf2
-          path: build/dirtyJtag.uf2
+          path: |
+            build/dirtyJtag.uf2
+            build/remote_bitbang.uf2
