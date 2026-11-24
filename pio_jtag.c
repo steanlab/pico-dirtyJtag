@@ -112,7 +112,7 @@ void dma_init()
 }
 
 
-void __time_critical_func(pio_jtag_write_blocking)(const pio_jtag_inst_t *jtag, const uint8_t *bsrc, size_t len) 
+void __time_critical_func(pio_jtag_write_blocking)(const pio_jtag_inst_t *jtag, const uint8_t *bsrc, size_t len)
 {
     size_t byte_length = (len+7 >> 3);
     size_t last_shift = ((byte_length << 3) - len);
@@ -143,7 +143,8 @@ void __time_critical_func(pio_jtag_write_blocking)(const pio_jtag_inst_t *jtag, 
     else
 #endif
     {
-        while (tx_remain || rx_remain) 
+        absolute_time_t __to = make_timeout_time_ms(50);
+        while (tx_remain || rx_remain)
         {
             if (tx_remain && !pio_sm_is_tx_fifo_full(jtag->pio, jtag->sm))
             {
@@ -155,13 +156,15 @@ void __time_critical_func(pio_jtag_write_blocking)(const pio_jtag_inst_t *jtag, 
                 x = *rxfifo;
                 --rx_remain;
             }
+            if (time_reached(__to))
+                break;
         }
     }
     last_tdo = !!(x & 1);
 }
 
 void __time_critical_func(pio_jtag_write_read_blocking)(const pio_jtag_inst_t *jtag, const uint8_t *bsrc, uint8_t *bdst,
-                                                         size_t len) 
+                                                         size_t len)
 {
     size_t byte_length = (len+7 >> 3);
     size_t last_shift = ((byte_length << 3) - len);
@@ -192,7 +195,8 @@ void __time_critical_func(pio_jtag_write_read_blocking)(const pio_jtag_inst_t *j
     else
 #endif
     {
-        while (tx_remain || rx_remain) 
+        absolute_time_t __to = make_timeout_time_ms(50);
+        while (tx_remain || rx_remain)
         {
             if (tx_remain && !pio_sm_is_tx_fifo_full(jtag->pio, jtag->sm))
             {
@@ -204,6 +208,8 @@ void __time_critical_func(pio_jtag_write_read_blocking)(const pio_jtag_inst_t *j
                 *bdst++ = *rxfifo;
                 --rx_remain;
             }
+            if (time_reached(__to))
+                break;
         }
     }
     last_tdo = !!(*rx_last_byte_p & 1);
@@ -228,7 +234,7 @@ uint8_t __time_critical_func(pio_jtag_write_tms_blocking)(const pio_jtag_inst_t 
     *(io_rw_32*)txfifo = len-1;
 #ifdef DMA
     if (byte_length > 4)
-    {   
+    {
         dma_init();
         channel_config_set_read_increment(&tx_c, false);
         channel_config_set_write_increment(&rx_c, false);
@@ -247,18 +253,21 @@ uint8_t __time_critical_func(pio_jtag_write_tms_blocking)(const pio_jtag_inst_t 
     else
 #endif
     {
-        while (tx_remain || rx_remain) 
+        absolute_time_t __to = make_timeout_time_ms(50);
+        while (tx_remain || rx_remain)
         {
-            if (tx_remain && !pio_sm_is_tx_fifo_full(jtag->pio, jtag->sm)) 
+            if (tx_remain && !pio_sm_is_tx_fifo_full(jtag->pio, jtag->sm))
             {
                 *txfifo = tdi_word;
                 --tx_remain;
             }
-            if (rx_remain && !pio_sm_is_rx_fifo_empty(jtag->pio, jtag->sm)) 
+            if (rx_remain && !pio_sm_is_rx_fifo_empty(jtag->pio, jtag->sm))
             {
                 x = *rxfifo;
                 --rx_remain;
             }
+            if (time_reached(__to))
+                break;
         }
     }
     last_tdo = !!(x & 1);
@@ -309,7 +318,7 @@ void jtag_set_clk_freq(const pio_jtag_inst_t *jtag, uint freq_khz) {
     uint clk_sys_freq_khz = clock_get_hz(clk_sys) / 1000;
     float divf = (float)clk_sys_freq_khz / (freq_khz * 4);
     uint16_t divider = (divf > (int)divf) ? (int)divf + 1 : (int)divf;
-    divider = (divider < 2) ? 2 : divider; //max reliable freq 
+    divider = (divider < 2) ? 2 : divider; //max reliable freq
     pio_sm_set_clkdiv_int_frac(pio0, jtag->sm, divider, 0);
 }
 
@@ -355,5 +364,4 @@ bool jtag_get_tdo(const pio_jtag_inst_t *jtag)
 {
     return last_tdo;
 }
-
 
