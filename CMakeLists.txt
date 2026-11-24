@@ -98,4 +98,14 @@ target_link_libraries(dirtyJtag PRIVATE
 )
 
 pico_add_extra_outputs(dirtyJtag)
+add_executable(remote_bitbang
+        remote_bitbang.c
+)
+target_include_directories(remote_bitbang PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
+pico_set_program_name(remote_bitbang "remote_bitbang")
+pico_set_program_version(remote_bitbang "0.1")
+pico_enable_stdio_usb(remote_bitbang 1)
+pico_enable_stdio_uart(remote_bitbang 0)
+target_link_libraries(remote_bitbang PRIVATE pico_stdlib)
+pico_add_extra_outputs(remote_bitbang)
 
