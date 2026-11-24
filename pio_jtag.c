@@ -24,6 +24,7 @@
  */
 
 #include <hardware/clocks.h>
+#include "pico/time.h"
 #include "hardware/dma.h"
 #include "dirtyJtagConfig.h"
 #include "pio_jtag.h"
