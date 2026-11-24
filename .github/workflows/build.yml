@@ -1,0 +1,29 @@
+name: Build DirtyJTAG
+on:
+  push:
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          submodules: recursive
+      - name: Install toolchain
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake gcc-arm-none-eabi libnewlib-arm-none-eabi build-essential
+      - name: Configure
+        run: |
+          mkdir build
+          cd build
+          cmake .. -DPICO_BOARD=pico
+      - name: Build
+        run: |
+          cd build
+          make -j$(nproc)
+      - name: Upload firmware
+        uses: actions/upload-artifact@v4
+        with:
+          name: dirtyJtag-uf2
+          path: build/dirtyJtag.uf2
