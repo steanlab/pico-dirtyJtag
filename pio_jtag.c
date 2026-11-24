@@ -31,7 +31,7 @@
 
 void jtag_task();//to process USB OUT packets while waiting for DMA to finish
 
-#define DMA
+//#define DMA
 
 static bool last_tdo = false;
 
